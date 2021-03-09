@@ -1,0 +1,28 @@
+device: 'cuda:3'
+
+tokenizer:
+    path: '../input/tokenizer'
+    file: 'tokenizer'
+
+images:
+    size: 256
+
+dataframes:
+    path: '../input/dataframes/'
+    file: 'valid.csv'
+    num_workers: 8
+
+model:
+    backbone: 'resnet34'
+    level: -1
+    emb_dim: 128
+    max_len: 298
+
+
+predict:
+    batch_size: 1024
+    model_path: 'logs/checkpoints/last_full.pth'
+    score: True
+    path: '../predicts/'
+    file: 'predict_valid.csv'
+    
