@@ -96,7 +96,7 @@ def main(config):
 
     log.info('Train Model')
     runner = CustomRunner(model=model, device=config.device)
-    print(config.training.resume, type(config.training.resume))
+
     runner.train(
         model      = model,
         optimizer  = optimizer,
