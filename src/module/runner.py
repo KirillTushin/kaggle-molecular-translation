@@ -11,43 +11,27 @@ class CustomRunner(dl.Runner):
         batch      = any2device(batch, self.device)
         images     = batch['images']
         batch_size = images.shape[0]
+        tgt        = torch.LongTensor([[self.model.bos_token_id]]*batch_size).to(self.device)
 
-        image_embeddings = self.model.image_embeddings(images)
-        image_embeddings = self.model.transformer.encoder(image_embeddings)
-        
-        
-        tokens = [[self.model.start_idx]]*batch_size
-        tgt = torch.LongTensor(tokens).to(self.device)
-        for _ in range(self.model.max_len):
-            
-            tgt_mask = self.model.make_tgt_mask(tgt)
-            tgt_key_padding_mask = self.model.make_pad_mask(tgt)
-            
-            token_embeddings = self.model.token_embeddings(tgt)
+        image_embeddings         = self.model.image_embeddings(images)
+        image_embeddings_encoder = self.model.transformer.encoder(inputs_embeds=image_embeddings)
 
-            output = self.model.transformer.decoder(token_embeddings, image_embeddings, tgt_mask=tgt_mask, tgt_key_padding_mask=tgt_key_padding_mask)
-            pred   = self.model.linear(output).transpose(1, 0)
-            
-            last = pred[:,-1:].argmax(dim=-1)
-            
-            tgt = torch.cat([tgt, last], dim=1)
+        kwargs = {'encoder_outputs':image_embeddings_encoder}
+        greedy_output = self.model.transformer.greedy_search(
+            tgt,
+            max_length = self.model.max_len,
+            pad_token_id = self.model.pad_token_id,
+            eos_token_id = self.model.eos_token_id,
+            **kwargs,
+        )
 
-        return [list(x) for x in tgt.detach().cpu().numpy()]
+        return [list(x) for x in greedy_output.detach().cpu().numpy()]
 
     
     def _handle_batch(self, batch):
         batch_metrics = {}
-        
         batch = any2device(batch, self.device)
-
-        tokens = batch['texts']
-        
-        batch['tokens'] = tokens[:, :-1]
-        
-        y     = tokens[:,1:]
-        y_hat = self.model(batch).transpose(2, 1)
-
-        loss = F.cross_entropy(y_hat, y, ignore_index=self.model.pad_idx)
+        loss  = self.model(batch)['loss']
         
         self.batch_metrics.update(
             {"loss": loss}

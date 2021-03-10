@@ -2,12 +2,12 @@ import math
 
 import torch
 from torch import nn
-
 import segmentation_models_pytorch as smp
+from transformers import BertConfig, EncoderDecoderConfig, EncoderDecoderModel, AutoModelForSeq2SeqLM
 
-class PositionalEncoding(nn.Module):
+class ImagePositionalEncoding(nn.Module):
     def __init__(self, d_model, dropout=0.1, max_len=5000):
-        super(PositionalEncoding, self).__init__()
+        super().__init__()
         self.dropout = nn.Dropout(p=dropout)
 
         pe = torch.zeros(max_len, d_model)
@@ -15,96 +15,95 @@ class PositionalEncoding(nn.Module):
         div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(10000.0) / d_model))
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0).transpose(0, 1)
+        pe = pe.unsqueeze(0)
         self.register_buffer('pe', pe)
 
     def forward(self, x):
-        x = x + self.pe[:x.size(0), :]
+        x = x + self.pe
         return self.dropout(x)
 
 
 class ImageEmbeddings(nn.Module):
-    def __init__(self, img_size, backbone='resnet18', level=-2, emb_dim=128):
+    def __init__(self, image_size, backbone='resnet18', level=-2, emb_dim=128):
         super().__init__()
         self.backbone = smp.encoders.get_encoder(backbone, in_channels=1)
         self.level    = level
         
-        random_input = torch.rand(1, 1, img_size[0], img_size[1])
+        random_input = torch.rand(1, 1, image_size[0], image_size[1])
         shape = self.backbone(random_input)[level].shape[1:]
         
         self.seq_len = shape[1]*shape[2]
         self.after_backbone = shape[0]
         
         self.linear      = nn.Linear(self.after_backbone, emb_dim)
-        self.pos_encoder = PositionalEncoding(d_model=emb_dim,  max_len=self.seq_len)
+        self.pos_encoder = ImagePositionalEncoding(d_model=emb_dim,  max_len=self.seq_len)
     
     def forward(self, x):
         x = self.backbone(x)[self.level]
         x = x.reshape(-1, self.seq_len, self.after_backbone)
-        x = self.linear(x)     ## BS x NumTokens x EmbDim
-        x = x.transpose(1, 0)  ## NumTokens x BS x EmbDim
+        x = self.linear(x) ## BS x NumTokens x EmbDim
         return self.pos_encoder(x)
 
 
-class TokenEmbeddins(nn.Module):
-    def __init__(self, num_tokens, emb_dim=128, max_len=150):
-        super().__init__()
-        self.embeddings  = nn.Embedding(num_tokens, emb_dim)
-        self.pos_encoder = PositionalEncoding(d_model=emb_dim,  max_len=max_len)
-
-    def forward(self, x):
-        x = self.embeddings(x) ## BS x NumTokens x EmbDim
-        x = x.transpose(1, 0)  ## NumTokens x BS x EmbDim
-        return self.pos_encoder(x)
-
-
-class MyModel(nn.Module):
+class Model(nn.Module):
     def __init__(
         self,
-        tokenizer,
-        img_size   = (256, 256),
-        backbone   = 'resnet18',
-        level      = -1,
-        emb_dim    = 64,
-        max_len    = 150,
-        device     = 'cuda:2',
+        image_size=(256, 256),
+        backbone='resnet18',
+        level=-1,
+        hidden_size=128,
+        num_hidden_layers=6,
+        num_attention_heads=8,
+        max_len=150,
+        vocab_size=500,
+        bos_token_id=None,
+        pad_token_id=None,
+        eos_token_id=None,
     ):
         
         super().__init__()
-        num_tokens     = tokenizer.get_vocab_size()
-        self.tokenizer = tokenizer
-        self.start_idx = tokenizer.token_to_id('[SOS]')
-        self.pad_idx   = tokenizer.token_to_id('[PAD]')
+        self.bos_token_id = bos_token_id
+        self.pad_token_id = pad_token_id
+        self.eos_token_id = eos_token_id
         self.max_len   = max_len
-        self.device    = device
         
-        self.image_embeddings = ImageEmbeddings(img_size, backbone, level, emb_dim)
-        self.token_embeddings = TokenEmbeddins(num_tokens, emb_dim, max_len)
-        self.transformer    = nn.Transformer(
-            d_model         = emb_dim,
-            dim_feedforward = emb_dim*4,
+        self.image_embeddings = ImageEmbeddings(image_size, backbone, level, hidden_size)
+
+        config_encoder = BertConfig(
+            vocab_size=1,
+            hidden_size=hidden_size,
+            intermediate_size=hidden_size*4,
+            num_hidden_layers=num_hidden_layers,
+            num_attention_heads=num_attention_heads,
+            max_position_embeddings=1,
         )
-        self.linear = nn.Linear(emb_dim, num_tokens)
-    
+        
+        config_decoder = BertConfig(
+            vocab_size=vocab_size,
+            hidden_size=hidden_size,
+            num_hidden_layers=num_hidden_layers,
+            num_attention_heads=num_attention_heads,
+            intermediate_size=hidden_size*4,
+            max_position_embeddings=300,
+        )
+
+        config_decoder.is_decoder = True
+        config_decoder.add_cross_attention = True
+
+        config = EncoderDecoderConfig.from_encoder_decoder_configs(config_encoder, config_decoder)
+        
+        self.transformer = EncoderDecoderModel(config=config)    
         
     def forward(self, batch):
         images = batch['images']
         tokens = batch['tokens']
+        attention_mask = batch['attention_mask']
         
-        tgt_mask = self.make_tgt_mask(tokens)
-        tgt_key_padding_mask = self.make_pad_mask(tokens)
+        inputs_embeds = self.image_embeddings(images)
         
-        image_embeddings = self.image_embeddings(images)
-        token_embeddings = self.token_embeddings(tokens)
-
-        output = self.transformer(image_embeddings, token_embeddings, tgt_mask=tgt_mask, tgt_key_padding_mask=tgt_key_padding_mask)
-        return self.linear(output).transpose(1, 0)
-    
-    
-    def make_tgt_mask(self, trg):
-        return self.transformer.generate_square_subsequent_mask(trg.shape[1]).to(self.device)
-    
-    def make_pad_mask(self, trg):
-        return trg == self.pad_idx
-    
-
+        return self.transformer(
+            inputs_embeds=inputs_embeds,
+            decoder_input_ids=tokens,
+            decoder_attention_mask=attention_mask,
+            labels=tokens,
+        )

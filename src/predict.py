@@ -13,7 +13,7 @@ import torchvision.transforms as transforms
 
 from catalyst.utils.misc import set_global_seed
 
-from module.model import MyModel
+from module.model import Model
 from module.runner import CustomRunner
 from module.dataset import ChemicalDataset
 from module.utils import drop_after_eos, lev_score
@@ -55,14 +55,18 @@ def main(config):
 
 
     log.info('Create Model')
-    model = MyModel(
-        tokenizer = tokenizer,
-        img_size  = (config.images.size, config.images.size),
-        backbone  = config.model.backbone,
-        level     = config.model.level,
-        emb_dim   = config.model.emb_dim,
-        max_len   = config.model.max_len,
-        device    = config.device,
+    model = Model(
+        image_size          = (config.images.size, config.images.size),
+        backbone            = config.model.backbone,
+        level               = config.model.level,
+        hidden_size         = config.model.hidden_size,
+        num_hidden_layers   = config.model.num_hidden_layers,
+        num_attention_heads = config.model.num_attention_heads,
+        max_len             = config.model.max_len,
+        vocab_size          = tokenizer.get_vocab_size(),
+        bos_token_id        = tokenizer.token_to_id('[SOS]'),
+        pad_token_id        = tokenizer.token_to_id('[PAD]'),
+        eos_token_id        = tokenizer.token_to_id('[EOS]'),
     )
     
     log.info('Predict')

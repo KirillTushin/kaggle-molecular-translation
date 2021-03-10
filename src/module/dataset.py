@@ -27,6 +27,7 @@ class ChemicalDataset(Dataset):
         data = {'images': image}
         
         if self.targets is not False:
-            data['texts'] = torch.LongTensor(self.targets[idx].ids)
+            data['tokens'] = torch.LongTensor(self.targets[idx].ids)
+            data['attention_mask'] = torch.LongTensor(self.targets[idx].attention_mask)
         
         return data
