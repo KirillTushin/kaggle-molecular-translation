@@ -6,7 +6,7 @@ dataframes:
     path: '../input/dataframes/'
 
 tokenizer:
-    fit: False
+    fit: True
     path: '../input/tokenizer'
     raw: 'tokenizer.raw'
     model: 'WordPiece'

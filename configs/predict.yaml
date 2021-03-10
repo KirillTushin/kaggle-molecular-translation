@@ -9,7 +9,7 @@ images:
 
 dataframes:
     path: '../input/dataframes/'
-    file: 'train.csv'
+    file: 'test.csv'
     num_workers: 8
 
 model:
@@ -25,5 +25,5 @@ predict:
     model_path: 'logs/checkpoints/best_full.pth'
     score: True
     path: '../predicts/'
-    file: 'predict_train.csv'
+    file: 'predict_test.csv'
     
