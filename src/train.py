@@ -105,6 +105,7 @@ def main(config):
         logdir     = config.training.logdir,
         num_epochs = config.training.num_epochs,
         resume     = config.training.resume if config.training.resume else None,
+        fp16       = config.training.fp16 if config.training.fp16 else None,
         verbose    = True,
     )
 

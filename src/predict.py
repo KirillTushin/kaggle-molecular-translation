@@ -33,6 +33,7 @@ def main(config):
     with open(f'{config.tokenizer.path}/{config.tokenizer.file}', 'rb') as f:
         tokenizer = pickle.load(f)
 
+    eos_id = tokenizer.token_to_id('[EOS]')
 
     log.info('Create Datasets and loaders')
     transform = transforms.Compose([
@@ -74,23 +75,27 @@ def main(config):
         model  = model,
         device = config.device,
     )
-    
-    eos_id  = tokenizer.token_to_id('[EOS]')
+    predictions = runner.predict_loader(
+        loader=loader,
+        resume=config.predict.model_path,
+        fp16=config.predict.fp16 if config.predict.fp16 else None,
+    )
+
     results = []
-    for pred in tqdm(runner.predict_loader(loader=loader, resume=config.predict.model_path), total=len(loader)):
+    for pred in tqdm(predictions, total=len(loader)):
         results.extend([drop_after_eos(p, eos_id) for p in pred])
-        
+
     data['Predicted_InChI'] = ['InChI=1S/' + x.replace(' ', '').replace('##', '') for x in tokenizer.decode_batch(results)]
     data['InChI'] = 'InChI=1S/' +  data['InChI']
-    
+
     if config.predict.score:
         log.info('Scoring')
         data['score'] = lev_score('InChI=1S/' + data['Predicted_InChI'], data['InChI'])
-        print(f'Score: {data["score"].mean()}')
-        
+        log.info(f'Score: {data["score"].mean()}')
+
     os.makedirs(config.predict.path, exist_ok=True)
     data.to_csv(f'{config.predict.path}/{config.dataframes.file}', index=False)
-    
+
     if config.predict.submit:
         sub = data[['image_id', 'Predicted_InChI']].rename(columns={'Predicted_InChI':'InChI'})
         sub.to_csv(f'{config.predict.path}/submit_{config.dataframes.file}', index=False)
