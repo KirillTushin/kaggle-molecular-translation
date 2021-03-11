@@ -18,12 +18,11 @@ model:
     hidden_size: 128
     num_hidden_layers: 6
     num_attention_heads: 8
-    max_len: 200
+    max_len: 250
 
 predict:
     batch_size: 1024
     model_path: 'logs/checkpoints/best_full.pth'
-    score: True
+    score: False
+    submit: True
     path: '../predicts/'
-    file: 'predict_test.csv'
-    

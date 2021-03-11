@@ -89,7 +89,11 @@ def main(config):
         print(f'Score: {data["score"].mean()}')
         
     os.makedirs(config.predict.path, exist_ok=True)
-    data.to_csv(f'{config.predict.path}/{config.predict.file}', index=False)
+    data.to_csv(f'{config.predict.path}/{config.dataframes.file}', index=False)
+    
+    if config.predict.submit:
+        sub = data[['image_id', 'Predicted_InChI']].rename(columns={'Predicted_InChI':'InChI'})
+        sub.to_csv(f'{config.predict.path}/submit_{config.dataframes.file}', index=False)
 
 
 if __name__ == "__main__":
