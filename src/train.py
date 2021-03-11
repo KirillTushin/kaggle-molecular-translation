@@ -87,8 +87,8 @@ def main(config):
         max_len             = config.model.max_len,
         vocab_size          = tokenizer.get_vocab_size(),
         bos_token_id        = tokenizer.token_to_id('[SOS]'),
-        pad_token_id        = tokenizer.token_to_id('[PAD]'),
         eos_token_id        = tokenizer.token_to_id('[EOS]'),
+        pad_token_id        = tokenizer.token_to_id('[PAD]'),
     )
     optimizer = torch.optim.Adam(model.parameters(), lr=config.training.lr)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.training.T_max)

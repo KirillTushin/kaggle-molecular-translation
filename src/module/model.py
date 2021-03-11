@@ -56,15 +56,15 @@ class Model(nn.Module):
         num_attention_heads=8,
         max_len=150,
         vocab_size=500,
-        bos_token_id=None,
-        pad_token_id=None,
-        eos_token_id=None,
+        bos_token_id=0,
+        eos_token_id=1,
+        pad_token_id=2,
     ):
         
         super().__init__()
         self.bos_token_id = bos_token_id
-        self.pad_token_id = pad_token_id
         self.eos_token_id = eos_token_id
+        self.pad_token_id = pad_token_id
         self.max_len   = max_len
         
         self.image_embeddings = ImageEmbeddings(image_size, backbone, level, hidden_size)
@@ -85,6 +85,7 @@ class Model(nn.Module):
             num_attention_heads=num_attention_heads,
             intermediate_size=hidden_size*4,
             max_position_embeddings=300,
+            pad_token_id=pad_token_id,
         )
 
         config_decoder.is_decoder = True

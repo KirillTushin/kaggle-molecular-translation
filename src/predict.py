@@ -65,8 +65,8 @@ def main(config):
         max_len             = config.model.max_len,
         vocab_size          = tokenizer.get_vocab_size(),
         bos_token_id        = tokenizer.token_to_id('[SOS]'),
-        pad_token_id        = tokenizer.token_to_id('[PAD]'),
         eos_token_id        = tokenizer.token_to_id('[EOS]'),
+        pad_token_id        = tokenizer.token_to_id('[PAD]'),
     )
     
     log.info('Predict')
