@@ -27,4 +27,5 @@ training:
     num_epochs: 50
     logdir: './logs'
     resume: False
+    fp16: False
     
