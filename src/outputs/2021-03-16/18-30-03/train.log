@@ -22,3 +22,6 @@
 [2021-03-17 10:10:43,492][metrics_logger][INFO] - 
 6/50 * Epoch 6 (train): loss=0.0949
 6/50 * Epoch 6 (valid): loss=0.0784
+[2021-03-17 12:47:11,366][metrics_logger][INFO] - 
+7/50 * Epoch 7 (train): loss=0.0865
+7/50 * Epoch 7 (valid): loss=0.0546
