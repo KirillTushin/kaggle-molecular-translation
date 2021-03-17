@@ -22,7 +22,7 @@ model:
 
 predict:
     batch_size: 2048
-    model_path: 'logs/checkpoints/best_full.pth'
+    model_path: 'logs/checkpoints/best.pth'
     fp16: False
     score: False
     submit: True
