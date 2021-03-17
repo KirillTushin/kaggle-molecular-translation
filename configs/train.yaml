@@ -1,12 +1,12 @@
 seed: 42
-device: 'cuda:2'
+device: 'cuda:0'
 
 tokenizer:
     path: '../input/tokenizer'
     file: 'tokenizer'
 
 images:
-    size: 256
+    size: 224
 
 dataframes:
     path: '../input/dataframes/'
@@ -18,14 +18,13 @@ model:
     hidden_size: 128
     num_hidden_layers: 6
     num_attention_heads: 8
-    max_len: 200
+    max_len: 350
     
 training:
-    batch_size: 96
+    batch_size: 80
     lr: 5e-4
     T_max: 10
     num_epochs: 50
     logdir: './logs'
     resume: False
     fp16: False
-    

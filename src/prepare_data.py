@@ -7,7 +7,7 @@ import hydra
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedShuffleSplit
 
 from tokenizers import Tokenizer
 from tokenizers.models import *
@@ -40,26 +40,18 @@ def main(config):
 
 
     log.info('Train Test Split')
-    train, valid = train_test_split(
-        data,
+    sss = StratifiedShuffleSplit(
+        n_splits     = 1, 
         test_size    = config.test_size,
         random_state = config.random_state,
-        shuffle      = True,
     )
+    train_index, valid_index = next(sss.split(data.index, data['InChI'].apply(lambda x: (len(x) // 20)*20)))
 
-    train = train.reset_index(drop=True)
-    valid = valid.reset_index(drop=True)
+    train = data.loc[train_index].reset_index(drop=True)
+    valid = data.loc[valid_index].reset_index(drop=True)
 
 
     if config.tokenizer.fit:
-        log.info('Create tokenizer file to train')
-        os.makedirs(config.tokenizer.path, exist_ok=True)
-        
-        with open(f'{config.tokenizer.path}/{config.tokenizer.raw}', 'w') as f:
-            for line in train['InChI'].values:
-                f.write(line + '\n')
-
-
         log.info('Create Tokenizer and Train')
         TokenModel = eval(f'{config.tokenizer.model}')
         Trainer    = eval(f'{config.tokenizer.model}Trainer')
@@ -68,18 +60,18 @@ def main(config):
         tokenizer.pre_tokenizer = Punctuation()
 
         trainer = Trainer(
-            special_tokens = ['[SOS]', '[EOS]', '[PAD]'],
+            special_tokens = ['[PAD]', '[BOS]', '[EOS]'] + ['B', 'Br', 'C', 'Cl', 'D', 'F', 'H', 'I', 'N', 'O', 'P', 'S', 'Si', 'T'],
             vocab_size     = config.tokenizer.vocab_size,
         )
-        tokenizer.train(
-            files   = [f'{config.tokenizer.path}/{config.tokenizer.raw}'],
-            trainer = trainer,
+        tokenizer.train_from_iterator(
+            iterator = train['InChI'],
+            trainer  = trainer,
         )
 
         tokenizer.post_processor = TemplateProcessing(
-            single         = '[SOS] $A [EOS]',
+            single         = '[BOS] $A [EOS]',
             special_tokens = [
-                ('[SOS]', tokenizer.token_to_id('[SOS]')),
+                ('[BOS]', tokenizer.token_to_id('[BOS]')),
                 ('[EOS]', tokenizer.token_to_id('[EOS]')),
             ],
         )
@@ -88,8 +80,8 @@ def main(config):
             pad_token = '[PAD]',
         )
 
-
         log.info('Save Tokenizer')
+        os.makedirs(config.tokenizer.path, exist_ok=True)
         with open(f'{config.tokenizer.path}/{config.tokenizer.file}', 'wb') as f:
             pickle.dump(tokenizer, f)
 
@@ -109,7 +101,7 @@ def main(config):
         train.to_csv(f'{config.dataframes.path}/train.csv', index=False)
         valid.to_csv(f'{config.dataframes.path}/valid.csv', index=False)
         test.to_csv(f'{config.dataframes.path}/test.csv', index=False)
-
+    
 
         log.info('Resize Images')
         img_size = (config.images.size, config.images.size)
@@ -117,8 +109,13 @@ def main(config):
             for path, new_path in tqdm(zip(dataset['image_path'], dataset['resized_image_path']), total=len(dataset)):
                 img = Image.open(path)
                 img = img.resize(img_size, resample=Image.BICUBIC)
+                img = np.array(img)
+                
+                if img.shape[0] > img.shape[1]:
+                    img = img.transpose(1, 0, 2)
+                
                 img = cv2.dilate(
-                    255 - np.array(img),
+                    255 - img,
                     kernel     = (config.images.dilate.kernel, config.images.dilate.kernel),
                     iterations = config.images.dilate.iterations,
                 )

@@ -2,8 +2,11 @@ import math
 
 import torch
 from torch import nn
+
 import segmentation_models_pytorch as smp
-from transformers import BertConfig, EncoderDecoderConfig, EncoderDecoderModel, AutoModelForSeq2SeqLM
+
+from transformers import BertConfig, GPT2Config, EncoderDecoderConfig, EncoderDecoderModel
+
 
 class ImagePositionalEncoding(nn.Module):
     def __init__(self, d_model, dropout=0.1, max_len=5000):
@@ -51,60 +54,58 @@ class Model(nn.Module):
         image_size=(256, 256),
         backbone='resnet18',
         level=-1,
+        vocab_size=200,
+        max_len=150,
         hidden_size=128,
         num_hidden_layers=6,
         num_attention_heads=8,
-        max_len=150,
-        vocab_size=500,
-        bos_token_id=0,
-        eos_token_id=1,
-        pad_token_id=2,
+        pad_token_id=0,
+        bos_token_id=1,
+        eos_token_id=2,
     ):
         
         super().__init__()
+        self.pad_token_id = pad_token_id
         self.bos_token_id = bos_token_id
         self.eos_token_id = eos_token_id
-        self.pad_token_id = pad_token_id
-        self.max_len   = max_len
+        self.max_len      = max_len
         
         self.image_embeddings = ImageEmbeddings(image_size, backbone, level, hidden_size)
-
         config_encoder = BertConfig(
             vocab_size=1,
             hidden_size=hidden_size,
             intermediate_size=hidden_size*4,
-            num_hidden_layers=num_hidden_layers,
+            num_hidden_layers=1,
             num_attention_heads=num_attention_heads,
             max_position_embeddings=1,
         )
         
-        config_decoder = BertConfig(
+        config_decoder = GPT2Config(
             vocab_size=vocab_size,
-            hidden_size=hidden_size,
-            num_hidden_layers=num_hidden_layers,
-            num_attention_heads=num_attention_heads,
-            intermediate_size=hidden_size*4,
-            max_position_embeddings=300,
-            pad_token_id=pad_token_id,
+            n_positions=max_len,
+            n_ctx=max_len,
+            n_embd=hidden_size,
+            n_layer=num_hidden_layers,
+            n_head=num_attention_heads,
+            bos_token_id=bos_token_id,
+            eos_token_id=eos_token_id,
         )
-
-        config_decoder.is_decoder = True
+        
         config_decoder.add_cross_attention = True
 
         config = EncoderDecoderConfig.from_encoder_decoder_configs(config_encoder, config_decoder)
+        self.transformer = EncoderDecoderModel(config)
         
-        self.transformer = EncoderDecoderModel(config=config)    
         
     def forward(self, batch):
         images = batch['images']
-        tokens = batch['tokens']
-        attention_mask = batch['attention_mask']
         
-        inputs_embeds = self.image_embeddings(images)
+        inputs_embeds          = self.image_embeddings(images)
+        decoder_input_ids      = batch['tokens']
+        decoder_attention_mask = batch['attention_mask']
         
         return self.transformer(
-            inputs_embeds=inputs_embeds,
-            decoder_input_ids=tokens,
-            decoder_attention_mask=attention_mask,
-            labels=tokens,
+            inputs_embeds          = inputs_embeds,
+            decoder_input_ids      = decoder_input_ids,
+            decoder_attention_mask = decoder_attention_mask,
         )

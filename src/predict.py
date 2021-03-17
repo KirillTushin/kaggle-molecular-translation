@@ -16,7 +16,7 @@ from catalyst.utils.misc import set_global_seed
 from module.model import Model
 from module.runner import CustomRunner
 from module.dataset import ChemicalDataset
-from module.utils import drop_after_eos, lev_score
+from module.utils import clean_tokens, lev_score
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 log = logging.getLogger(__name__)
@@ -32,6 +32,9 @@ def main(config):
     log.info('Read Tokenizer')
     with open(f'{config.tokenizer.path}/{config.tokenizer.file}', 'rb') as f:
         tokenizer = pickle.load(f)
+        pad_token_id = tokenizer.token_to_id('[PAD]')
+        bos_token_id = tokenizer.token_to_id('[BOS]')
+        eos_token_id = tokenizer.token_to_id('[EOS]')
 
     eos_id = tokenizer.token_to_id('[EOS]')
 
@@ -53,7 +56,7 @@ def main(config):
         num_workers = config.dataframes.num_workers,
         shuffle     = False,
     )
-
+    
 
     log.info('Create Model')
     model = Model(
@@ -65,9 +68,9 @@ def main(config):
         num_attention_heads = config.model.num_attention_heads,
         max_len             = config.model.max_len,
         vocab_size          = tokenizer.get_vocab_size(),
-        bos_token_id        = tokenizer.token_to_id('[SOS]'),
-        eos_token_id        = tokenizer.token_to_id('[EOS]'),
-        pad_token_id        = tokenizer.token_to_id('[PAD]'),
+        pad_token_id        = pad_token_id,
+        bos_token_id        = bos_token_id,
+        eos_token_id        = eos_token_id,
     )
     
     log.info('Predict')
@@ -83,14 +86,14 @@ def main(config):
 
     results = []
     for pred in tqdm(predictions, total=len(loader)):
-        results.extend([drop_after_eos(p, eos_id) for p in pred])
+        results.extend([clean_tokens(p, after=[pad_token_id, eos_token_id], skip=[pad_token_id, bos_token_id, eos_token_id]) for p in pred])
 
-    data['Predicted_InChI'] = ['InChI=1S/' + x.replace(' ', '').replace('##', '') for x in tokenizer.decode_batch(results)]
     data['InChI'] = 'InChI=1S/' +  data['InChI']
+    data['Predicted_InChI'] = ['InChI=1S/' + x.replace(' ', '').replace('##', '') for x in tokenizer.decode_batch(results, skip_special_tokens=False)]
 
     if config.predict.score:
         log.info('Scoring')
-        data['score'] = lev_score('InChI=1S/' + data['Predicted_InChI'], data['InChI'])
+        data['score'] = lev_score(data['Predicted_InChI'], data['InChI'])
         log.info(f'Score: {data["score"].mean()}')
 
     os.makedirs(config.predict.path, exist_ok=True)

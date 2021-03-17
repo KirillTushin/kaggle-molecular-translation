@@ -1,5 +1,5 @@
 data_path: '../input/'
-test_size: 0.15
+test_size: 0.1
 random_state: 42
 
 dataframes:
@@ -8,14 +8,13 @@ dataframes:
 tokenizer:
     fit: True
     path: '../input/tokenizer'
-    raw: 'tokenizer.raw'
     model: 'WordPiece'
     file: 'tokenizer'
-    vocab_size: 500
+    vocab_size: 100
 
 images:
     resize: True
-    size: 256
+    size: 224
     dilate:
-        kernel: 3
-        iterations: 3
+        kernel: 2
+        iterations: 2

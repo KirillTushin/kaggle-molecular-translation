@@ -1,7 +1,8 @@
+from PIL import Image
+
 import torch
 from torch.utils.data import Dataset
 
-from PIL import Image
 
 class ChemicalDataset(Dataset):
     def __init__(self, dataframe, image_path, transform=None, target = True):
@@ -27,7 +28,7 @@ class ChemicalDataset(Dataset):
         data = {'images': image}
         
         if self.targets is not False:
-            data['tokens'] = torch.LongTensor(self.targets[idx].ids)
+            data['tokens']         = torch.LongTensor(self.targets[idx].ids)
             data['attention_mask'] = torch.LongTensor(self.targets[idx].attention_mask)
         
         return data

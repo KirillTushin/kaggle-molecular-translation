@@ -16,7 +16,7 @@ from module.model import Model
 from module.runner import CustomRunner
 from module.dataset import ChemicalDataset
 
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
 log = logging.getLogger(__name__)
 
 @hydra.main(config_name='../configs/train.yaml')
@@ -38,7 +38,6 @@ def main(config):
     log.info('Tokenize train and valid')
     train['InChI_tokenized'] = tokenizer.encode_batch(train['InChI'])
     valid['InChI_tokenized'] = tokenizer.encode_batch(valid['InChI'])
-    max_len = len(train['InChI_tokenized'].iloc[0])
 
     log.info('Create Datasets and loaders')
     transform = transforms.Compose([
@@ -86,10 +85,12 @@ def main(config):
         num_attention_heads = config.model.num_attention_heads,
         max_len             = config.model.max_len,
         vocab_size          = tokenizer.get_vocab_size(),
-        bos_token_id        = tokenizer.token_to_id('[SOS]'),
-        eos_token_id        = tokenizer.token_to_id('[EOS]'),
         pad_token_id        = tokenizer.token_to_id('[PAD]'),
+        bos_token_id        = tokenizer.token_to_id('[BOS]'),
+        eos_token_id        = tokenizer.token_to_id('[EOS]'),
     )
+    
+    criterion = torch.nn.CrossEntropyLoss(ignore_index=tokenizer.token_to_id('[PAD]'))
     optimizer = torch.optim.Adam(model.parameters(), lr=config.training.lr)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.training.T_max)
 
@@ -99,6 +100,7 @@ def main(config):
 
     runner.train(
         model      = model,
+        criterion  = criterion,
         optimizer  = optimizer,
         scheduler  = scheduler,
         loaders    = loaders,
