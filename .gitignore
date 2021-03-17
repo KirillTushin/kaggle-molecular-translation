@@ -1,5 +1,5 @@
 **/.ipynb_checkpoints/
 **/__pycache__/
 input/
-logs/checkpoints/*_full.pth
+src/logs/checkpoints/*_full.pth
 predicts/
