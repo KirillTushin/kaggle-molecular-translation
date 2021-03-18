@@ -19,3 +19,30 @@
 [2021-03-17 12:47:11,366] 
 7/50 * Epoch 7 (train): loss=0.0865
 7/50 * Epoch 7 (valid): loss=0.0546
+[2021-03-17 15:23:36,288] 
+8/50 * Epoch 8 (train): loss=0.0798
+8/50 * Epoch 8 (valid): loss=0.0522
+[2021-03-17 18:00:21,373] 
+9/50 * Epoch 9 (train): loss=0.0743
+9/50 * Epoch 9 (valid): loss=0.0539
+[2021-03-17 20:37:10,609] 
+10/50 * Epoch 10 (train): loss=0.0697
+10/50 * Epoch 10 (valid): loss=0.0462
+[2021-03-17 23:13:11,708] 
+11/50 * Epoch 11 (train): loss=0.0660
+11/50 * Epoch 11 (valid): loss=0.0437
+[2021-03-18 01:49:19,838] 
+12/50 * Epoch 12 (train): loss=0.0628
+12/50 * Epoch 12 (valid): loss=0.0442
+[2021-03-18 04:25:27,417] 
+13/50 * Epoch 13 (train): loss=0.0601
+13/50 * Epoch 13 (valid): loss=0.0433
+[2021-03-18 07:01:38,375] 
+14/50 * Epoch 14 (train): loss=0.0576
+14/50 * Epoch 14 (valid): loss=0.0542
+[2021-03-18 09:38:20,518] 
+15/50 * Epoch 15 (train): loss=0.0554
+15/50 * Epoch 15 (valid): loss=0.0398
+[2021-03-18 12:14:27,814] 
+16/50 * Epoch 16 (train): loss=0.0535
+16/50 * Epoch 16 (valid): loss=0.0383

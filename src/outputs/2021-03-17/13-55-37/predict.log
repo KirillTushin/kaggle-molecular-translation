@@ -1,0 +1,5 @@
+[2021-03-17 13:55:37,538][__main__][INFO] - Read Data
+[2021-03-17 13:55:40,868][__main__][INFO] - Read Tokenizer
+[2021-03-17 13:55:40,872][__main__][INFO] - Create Datasets and loaders
+[2021-03-17 13:55:40,874][__main__][INFO] - Create Model
+[2021-03-17 13:55:42,495][__main__][INFO] - Predict

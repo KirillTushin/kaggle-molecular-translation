@@ -1,12 +1,12 @@
 {
   "best": {
-    "loss": 0.05463246129558386
+    "loss": 0.038308190176634234
   },
   "last": {
-    "loss": 0.05463246129558386
+    "loss": 0.038308190176634234
   },
-  "train.7": {
-    "loss": 0.05463246129558386
+  "train.16": {
+    "loss": 0.038308190176634234
   },
   "epoch_0": [
     "logs/checkpoints/train.1.pth",
@@ -56,5 +56,69 @@
     {
       "loss": 0.05463246129558386
     }
-  ]
+  ],
+  "epoch_7": [
+    "logs/checkpoints/train.8.pth",
+    0.052189112692355016,
+    {
+      "loss": 0.052189112692355016
+    }
+  ],
+  "epoch_8": [
+    "logs/checkpoints/train.9.pth",
+    0.053922472072135075,
+    {
+      "loss": 0.053922472072135075
+    }
+  ],
+  "epoch_9": [
+    "logs/checkpoints/train.10.pth",
+    0.046249598498151974,
+    {
+      "loss": 0.046249598498151974
+    }
+  ],
+  "epoch_10": [
+    "logs/checkpoints/train.11.pth",
+    0.043722518298384604,
+    {
+      "loss": 0.043722518298384604
+    }
+  ],
+  "epoch_11": [
+    "logs/checkpoints/train.12.pth",
+    0.04419459896258696,
+    {
+      "loss": 0.04419459896258696
+    }
+  ],
+  "epoch_12": [
+    "logs/checkpoints/train.13.pth",
+    0.043308411213450464,
+    {
+      "loss": 0.043308411213450464
+    }
+  ],
+  "epoch_13": [
+    "logs/checkpoints/train.14.pth",
+    0.05420826644421969,
+    {
+      "loss": 0.05420826644421969
+    }
+  ],
+  "epoch_14": [
+    "logs/checkpoints/train.15.pth",
+    0.03978695856946781,
+    {
+      "loss": 0.03978695856946781
+    }
+  ],
+  "epoch_15": [
+    "logs/checkpoints/train.16.pth",
+    0.038308190176634234,
+    {
+      "loss": 0.038308190176634234
+    }
+  ],
+  "train.17.exception_KeyboardInterrupt": {}
 }
