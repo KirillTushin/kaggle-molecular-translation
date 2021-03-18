@@ -1,7 +1,0 @@
-[2021-03-17 10:32:58,489][__main__][INFO] - Read Data
-[2021-03-17 10:32:59,471][__main__][INFO] - Read Tokenizer
-[2021-03-17 10:32:59,473][__main__][INFO] - Create Datasets and loaders
-[2021-03-17 10:32:59,475][__main__][INFO] - Create Model
-[2021-03-17 10:33:01,038][__main__][INFO] - Predict
-[2021-03-17 10:48:02,474][__main__][INFO] - Scoring
-[2021-03-17 10:48:05,279][__main__][INFO] - Score: 13.323060486183014

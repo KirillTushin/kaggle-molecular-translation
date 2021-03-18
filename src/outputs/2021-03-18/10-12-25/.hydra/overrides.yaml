@@ -1,4 +1,0 @@
-- dataframes.file=valid.csv
-- predict.score=True
-- predict.submit=False
-- predict.batch_size=1024
